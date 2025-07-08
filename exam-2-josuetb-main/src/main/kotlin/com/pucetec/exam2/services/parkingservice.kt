@@ -2,6 +2,8 @@
 package com.pucetec.exam2.services
 
 import com.pucetec.exam2.repository.ParkingSpotRepository
+import com.pucetec.exam2.exceptions.NoAvailableSpotException
+import java.util.UUID
 import org.springframework.stereotype.Service
 
 @Service
@@ -20,8 +22,7 @@ class ParkingService(private val parkingSpotRepository: ParkingSpotRepository) {
         )
     }
 
-    fun assignParkingSpot(): ParkingSpot? {
-        // Busca el primer espacio libre en el piso más bajo disponible
+    fun assignParkingSpot(): Map<String, Any> {
         val freeSpots = parkingSpotRepository.findAll()
             .filter { !it.occupied }
             .sortedBy { it.floor }
@@ -29,9 +30,10 @@ class ParkingService(private val parkingSpotRepository: ParkingSpotRepository) {
         if (spot != null) {
             val updated = spot.copy(occupied = true)
             parkingSpotRepository.save(updated)
-            return updated
+            val ticketId = UUID.randomUUID().toString()
+            return mapOf("ticketId" to ticketId, "spot" to updated)
         }
-        return null
+        throw NoAvailableSpotException()
     }
 }
 
